@@ -1,0 +1,72 @@
+{
+  "name": "sound-notifier-for-claude-code",
+  "displayName": "Sound Notifier for Claude Code",
+  "description": "A notification sound for Claude Code that actually plays, even on machines where Windows system sounds are silently broken. Unofficial, not affiliated with Anthropic.",
+  "version": "0.1.0",
+  "publisher": "lukalesko",
+  "license": "MIT",
+  "icon": "resources/icon/icon.png",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "claude",
+    "claude code",
+    "notification",
+    "sound",
+    "alert",
+    "hooks"
+  ],
+  "galleryBanner": {
+    "color": "#4F46E5",
+    "theme": "dark"
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "claudeNotifier.setup",
+        "title": "Claude Notifier: Enable Sound Notifications"
+      },
+      {
+        "command": "claudeNotifier.disable",
+        "title": "Claude Notifier: Disable Sound Notifications"
+      },
+      {
+        "command": "claudeNotifier.testSound",
+        "title": "Claude Notifier: Test Sound"
+      }
+    ],
+    "configuration": {
+      "title": "Claude Code Notifier",
+      "properties": {
+        "claudeNotifier.soundFile": {
+          "type": "string",
+          "default": "",
+          "description": "Absolute path to a custom .wav file to play. Leave empty to use the bundled sound."
+        },
+        "claudeNotifier.notifyOnIdle": {
+          "type": "boolean",
+          "default": true,
+          "description": "Also play a sound when Claude has been idle ~60s waiting for your input (not just permission prompts)."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "tsc -p ./",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.80.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0"
+  }
+}

@@ -1,0 +1,6 @@
+.vscode/**
+src/**
+.gitignore
+tsconfig.json
+**/*.map
+resources/icon/make-icon.ps1

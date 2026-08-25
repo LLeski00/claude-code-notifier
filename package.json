@@ -5,7 +5,7 @@
   "version": "0.1.0",
   "publisher": "lukalesko",
   "license": "MIT",
-  "icon": "resources/icon/icon.png",
+  "icon": "media/icon.png",
   "engines": {
     "vscode": "^1.80.0"
   },
@@ -60,8 +60,9 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "tsc -p ./",
-    "compile": "tsc -p ./",
+    "clean": "node -e \"require('fs').rmSync('out', { recursive: true, force: true })\"",
+    "vscode:prepublish": "npm run clean && tsc -p ./",
+    "compile": "npm run clean && tsc -p ./",
     "watch": "tsc -watch -p ./"
   },
   "devDependencies": {

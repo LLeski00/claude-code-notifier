@@ -14,12 +14,22 @@ This extension sidesteps the broken path entirely: it plays sound through the sa
 
 ## What it does
 
-Adds two [Claude Code hooks](https://code.claude.com/docs/en/hooks) that play a short sound:
+Adds two [Claude Code hooks](https://code.claude.com/docs/en/hooks) — **Stop** (Claude finishes responding) and **Notification** (Claude needs your input: a permission prompt, or idle ~60s waiting for you) — written to `~/.claude/settings.json`, so they apply everywhere Claude Code runs: this VS Code extension's chat panel, the CLI, anywhere.
 
-- **Stop** — when Claude finishes responding
-- **Notification** — when Claude needs your input (permission prompt, or idle ~60s waiting for you)
+Both hooks call a single dispatcher script that reads a small config file and runs whichever notification **channels** are enabled. Sound is the only channel today; a Windows toast-style popup (bottom-right of the screen, like a Windows Update notification) is planned as a second channel — the dispatcher already loops over however many channels are configured, so adding one is a matter of dropping in a new channel implementation rather than changing how hooks are wired up.
 
-The hooks are written to `~/.claude/settings.json`, so they apply everywhere Claude Code runs — this VS Code extension's chat panel, the CLI, anywhere.
+## Architecture
+
+```
+resources/runNotify.ps1        dispatcher: reads config.json, runs each enabled channel
+resources/channels/sound.ps1   the sound channel (WinRT Windows.Media.Playback)
+
+src/domain/                    NotificationEvent, the NotificationChannel contract
+src/channels/                  one file per channel, registered in an array (Strategy pattern)
+src/config/                    builds & persists the dispatcher's config.json from VS Code settings
+src/claudeHooks/                reads/writes ~/.claude/settings.json, registers the dispatcher hook
+src/commands/                    enable / disable / test-sound command handlers
+```
 
 ## Usage
 
@@ -39,7 +49,7 @@ Other commands:
 
 ## Platform
 
-Windows only — the audio playback script (`resources/notify.ps1`) uses PowerShell and the WinRT `Windows.Media.Playback` API.
+Windows only — the sound channel (`resources/channels/sound.ps1`) uses PowerShell and the WinRT `Windows.Media.Playback` API.
 
 ## License
 

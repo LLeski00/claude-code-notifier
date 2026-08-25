@@ -1,11 +1,6 @@
-param(
-  [Parameter(Mandatory = $true)]
-  [string]$Sound
-)
+function Invoke-Notify {
+  param($Event, $Settings)
 
-$ErrorActionPreference = 'Stop'
-
-try {
   Add-Type -AssemblyName System.Runtime.WindowsRuntime | Out-Null
   $null = [Windows.Media.Playback.MediaPlayer, Windows.Media.Playback, ContentType = WindowsRuntime]
   $null = [Windows.Storage.StorageFile, Windows.Storage, ContentType = WindowsRuntime]
@@ -20,7 +15,7 @@ try {
     return $task.Result
   }
 
-  $storageFile = Wait-WinRTTask ([Windows.Storage.StorageFile]::GetFileFromPathAsync($Sound)) ([Windows.Storage.StorageFile])
+  $storageFile = Wait-WinRTTask ([Windows.Storage.StorageFile]::GetFileFromPathAsync($Settings.soundFile)) ([Windows.Storage.StorageFile])
 
   $player = New-Object Windows.Media.Playback.MediaPlayer
   $player.Source = [Windows.Media.Core.MediaSource]::CreateFromStorageFile($storageFile)
@@ -28,7 +23,4 @@ try {
   $player.Play()
 
   Start-Sleep -Seconds 3
-}
-catch {
-  exit 0
 }

@@ -1,10 +1,3 @@
-<#
-  Plays a sound file using the WinRT Windows.Media.Playback engine instead of the
-  legacy winmm PlaySound/System.Media.SoundPlayer path. On some machines the legacy
-  path is silently broken (no audio session is even created) while apps that use the
-  modern WASAPI-based engine (browsers, Spotify, the Movies & TV app, games) work fine.
-  Using the same engine as those apps sidesteps that broken layer entirely.
-#>
 param(
   [Parameter(Mandatory = $true)]
   [string]$Sound
@@ -34,11 +27,8 @@ try {
   $player.Volume = 1.0
   $player.Play()
 
-  # Fixed wait instead of hooking MediaEnded (WinRT events are unreliable to
-  # marshal from PowerShell 5.1). Covers any of the bundled short notification clips.
   Start-Sleep -Seconds 3
 }
 catch {
-  # Never let a broken audio path fail the calling Claude Code hook.
   exit 0
 }

@@ -1,14 +1,14 @@
 # Claude Code Toast Notifier
 
-Shows a little Windows popup in the bottom-right of your screen whenever [Claude Code](https://claude.com/claude-code) finishes a task or needs your input — the same kind of popup you get from Windows Update.
+Shows a little Windows popup in the bottom-right of your screen whenever [Claude Code](https://claude.com/claude-code) finishes a task or needs your input — the same kind of popup you get from Windows Update. It's shown under VS Code's own name and icon.
 
 *Unofficial community extension. Not affiliated with or endorsed by Anthropic.*
 
 ## Why this exists
 
-Windows has a "proper" way for apps to show these popups, but it only works for apps that were installed the normal way (with a Start Menu shortcut). Claude Code runs as a background script, so it doesn't qualify — and when that happens, Windows just quietly refuses to show the popup, without any error message.
+Windows has a "proper" way for apps to show these popups, but it only works for apps Windows already recognizes as genuinely installed — normally granted through a Start Menu shortcut. A background script has no such identity of its own, so it can't use that path directly.
 
-This extension shows the popup a different way, one that doesn't have that restriction, so the notification actually shows up every time.
+This extension works around that by borrowing an identity Windows already trusts: VS Code's. It asks Windows to show the popup as if VS Code itself sent it. That only works if VS Code is installed normally (true almost all the time) and if Windows notifications are turned on for it — see [Requirements](#requirements) below, since **this is the only way the popup can appear.**
 
 ## What it does
 
@@ -40,9 +40,9 @@ You can adjust these in VS Code's Settings (search for "Claude Notifier"):
 
 ## Requirements
 
-Windows notifications need to be switched on for this to work:
+**Windows notifications must be turned on for Visual Studio Code — this is mandatory, there's no other way for the popup to appear:**
 - the main switch: **Settings → System → Notifications**, and
-- the switch for **Windows PowerShell** specifically, a bit further down that same page.
+- the switch for **Visual Studio Code** specifically, a bit further down that same page.
 
 If either of these is off, the popup won't appear and there's no error message to tell you why — this is a Windows setting, not something this extension controls.
 
@@ -50,7 +50,7 @@ If either of these is off, the popup won't appear and there's no error message t
 
 **Popups not showing up?** Check the [Requirements](#requirements) above first — this is by far the most common cause.
 
-**Want to turn off the notification sound?** Windows automatically plays its default chime whenever this popup appears. To mute just this extension's sound: go to **Settings → System → Notifications**, click into the **Windows PowerShell** entry, and turn off "Play a sound when a notification arrives." This won't affect notification sounds from any other app.
+**Want to turn off the notification sound?** Windows automatically plays its default chime whenever this popup appears. To mute just this extension's sound: go to **Settings → System → Notifications**, click into the **Visual Studio Code** entry, and turn off "Play a sound when a notification arrives." This won't affect notification sounds from any other app.
 
 ## Platform
 
@@ -61,12 +61,12 @@ Windows only.
 <details>
 <summary>Technical details</summary>
 
-The popup is shown using `System.Windows.Forms.NotifyIcon` and its `ShowBalloonTip` method (in `resources/runNotify.ps1`) rather than the WinRT `Windows.UI.Notifications.ToastNotificationManager` API, because the latter requires the calling process to be registered under a real AUMID — normally granted via a Start Menu shortcut with notification support — and silently drops the toast otherwise.
+The popup is shown via the WinRT `Windows.UI.Notifications.ToastNotificationManager` API (in `resources/runNotify.ps1`), reusing the running VS Code build's own AUMID (`Microsoft.VisualStudioCode` / `.Insiders`) — but only after confirming via `Get-StartApps` that Windows already has that AUMID registered, since an *unregistered* AUMID causes this API to silently drop the toast with no exception. There is no fallback mechanism: if the AUMID isn't registered, nothing shows.
 
 Three [Claude Code hooks](https://code.claude.com/docs/en/hooks) — **Stop**, **Notification**, and **StopFailure** (matched to `rate_limit`) — are written to `~/.claude/settings.json`. All three call the same dispatcher script, which reads a small config file and shows the popup if it's enabled.
 
 ```
-resources/runNotify.ps1   dispatcher: reads config.json, shows the toast (System.Windows.Forms NotifyIcon balloon)
+resources/runNotify.ps1   dispatcher: reads config.json, shows the toast under VS Code's AUMID
 
 src/domain/               NotificationEvent vocabulary shared by the extension and the hook registration
 src/config/                builds & persists the dispatcher's config.json from VS Code settings

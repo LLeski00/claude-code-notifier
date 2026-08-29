@@ -1,7 +1,7 @@
 {
   "name": "claude-code-toast-notifier",
   "displayName": "Claude Code Toast Notifier",
-  "description": "A Windows popup (toast) notification for Claude Code that reliably appears, without needing the app registration Windows normally requires for toast notifications. Unofficial, not affiliated with Anthropic.",
+  "description": "A Windows popup (toast) notification for Claude Code, shown under VS Code's own trusted app identity so it actually appears. Unofficial, not affiliated with Anthropic.",
   "version": "0.1.0",
   "publisher": "lukalesko",
   "license": "MIT",

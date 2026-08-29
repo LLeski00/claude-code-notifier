@@ -2,6 +2,8 @@
 
 A VS Code extension that shows a Windows popup notification when Claude Code finishes responding or needs input. Built because the "proper" WinRT toast API silently drops notifications unless the calling process is registered under a real AUMID — see README.md "Why this exists" for the full story.
 
+The popup is always branded as **Visual Studio Code** (its name and icon) — the dispatcher reuses VS Code's own already-installed, already-trusted app identity, never one this project invents itself. This only works if the running VS Code build's AUMID is registered on the machine (true for a normal Code/Insiders install) and Windows notifications are enabled for it. There is no fallback: if either condition isn't met, no popup shows. See "The notification itself" below for why a self-registered AUMID doesn't work and was deliberately not pursued, and README.md's "Requirements" section for what this means for the user.
+
 ## Architecture
 
 Two runtimes are involved and must stay decoupled:
@@ -15,9 +17,11 @@ These two communicate through two files the extension writes into `~/.claude/not
 
 ### The notification itself
 
-`resources/runNotify.ps1` reads `config.json`; if `toastEnabled` is false it exits without doing anything, otherwise it shows the popup inline using `System.Windows.Forms.NotifyIcon` + `ShowBalloonTip`, not the raw WinRT `Windows.UI.Notifications.ToastNotificationManager` API — the WinRT API requires the calling process to be registered under a real AUMID (Start Menu shortcut with notification support) or it silently drops the toast with no exception. `NotifyIcon` needs no such registration and Windows 10/11 render its balloon as a native Action Center toast automatically. If toast notifications ever stop appearing, check Windows Settings → System → Notifications first (both the global toggle and the per-app "Windows PowerShell" toggle) before suspecting the code — a real-world debugging session traced a "nothing happens, no error" failure entirely to notifications being switched off at the OS level, not a bug in the script.
+`resources/runNotify.ps1` reads `config.json`; if `toastEnabled` is false it exits without doing anything. Otherwise it shows a **WinRT toast under VS Code's own AUMID** — the only mechanism, no fallback. If `config.vscodeAumid` is set (detected by `src/config/vscodeAumid.ts` from `process.execPath` — `Code.exe` → `Microsoft.VisualStudioCode`, `Code - Insiders.exe` → `Microsoft.VisualStudioCode.Insiders`) *and* `Get-StartApps` confirms that AUMID is actually registered on this machine, the dispatcher calls `Windows.UI.Notifications.ToastNotificationManager` with that AUMID. This renders as a native toast attributed to "Visual Studio Code" — its real name and icon — because we're reusing an identity Windows already trusts, not inventing one. If either condition fails (unrecognized VS Code build, or the hook fired before `config.json` exists), `Show-ToastUnderRegisteredApp` returns `$false` / the outer `if` is skipped and the script exits having shown nothing — there used to be a `System.Windows.Forms.NotifyIcon` balloon-tip fallback for this case, deliberately removed so the extension has exactly one code path to reason about; don't reintroduce it without a real second requirement driving it. This is also why Windows notifications being enabled for **Visual Studio Code** specifically (not "Windows PowerShell" — that only mattered for the removed fallback) is a hard requirement now, not just a recommendation. See README.md's "Requirements" section.
 
-There is deliberately no channel/strategy abstraction here — there is exactly one notification mechanism, so `runNotify.ps1` just does it. If a second, genuinely different notification mechanism is ever needed, that's the point to reintroduce a seam (a registry + one file per mechanism); don't build it preemptively for a single implementation.
+**Why not just register our own AUMID for "Claude Code" branding?** This was tried and reverted — a Start Menu shortcut with `System.AppUserModel.ID` set via `IPersistFile`/`IPropertyStore` genuinely persists (verified independently through `Shell.Application`'s `ExtendedProperty`), but Windows doesn't trust a freshly-invented AUMID for toast purposes: the first `Show()` either drops silently or renders many seconds late, misattributed to the underlying process name anyway. This is the exact failure mode described above and in README.md's "Why this exists" — a real AUMID needs to already be known to the OS's notification permission store, which only happens for apps genuinely installed the normal way (like VS Code itself), not for a shortcut a script drops into the Start Menu on the fly. Don't re-attempt self-registration without solving that trust problem first.
+
+If toast notifications ever stop appearing, check Windows Settings → System → Notifications first (both the global toggle and the per-app **Visual Studio Code** toggle) before suspecting the code — a real-world debugging session traced a "nothing happens, no error" failure entirely to notifications being switched off at the OS level, not a bug in the script.
 
 ### Design pattern: Repository, for the two JSON files
 
@@ -27,7 +31,7 @@ There is deliberately no channel/strategy abstraction here — there is exactly 
 
 ```
 src/domain/       Our own vocabulary: NotificationEvent. No I/O.
-src/config/         NotifierConfig type, building it from vscode.workspace settings, writing config.json.
+src/config/         NotifierConfig type, building it from vscode.workspace settings (plus the detected VS Code AUMID), writing config.json.
 src/claudeHooks/     ClaudeSettings type, reading/writing settings.json, registering/removing our hooks.
 src/assets/           Copies resources/ into the stable dir. Stays generic — never special-cases a filename.
 src/commands/           One file per VS Code command (enable/disable/testNotification), registered in index.ts.

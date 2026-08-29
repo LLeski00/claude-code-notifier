@@ -1,6 +1,6 @@
 param(
   [Parameter(Mandatory = $true)]
-  [ValidateSet('stop', 'notification', 'usageLimit')]
+  [ValidateSet('stop', 'notification', 'usageLimit', 'subagentStop')]
   [string]$Event
 )
 
@@ -17,6 +17,10 @@ if (-not $config.toastEnabled) {
   exit 0
 }
 
+if ($Event -eq 'subagentStop' -and -not $config.notifySubagentFinished) {
+  exit 0
+}
+
 try {
   Add-Type -AssemblyName System.Windows.Forms
   Add-Type -AssemblyName System.Drawing
@@ -25,6 +29,7 @@ try {
     'stop' { $title = 'Claude Code'; $message = 'Task finished' }
     'notification' { $title = 'Claude Code'; $message = 'Needs your input' }
     'usageLimit' { $title = 'Claude Code'; $message = 'Usage limit reached' }
+    'subagentStop' { $title = 'Claude Code'; $message = 'Subagent finished' }
     default { $title = 'Claude Code'; $message = 'Notification' }
   }
 

@@ -1,12 +1,13 @@
 import { NotificationEvent } from '../domain';
 import { ClaudeSettings, HookGroup } from './types';
 
-type ClaudeHookName = 'Stop' | 'Notification' | 'StopFailure';
+type ClaudeHookName = 'Stop' | 'Notification' | 'StopFailure' | 'SubagentStop';
 
 const HOOK_NAME_BY_EVENT: Record<NotificationEvent, ClaudeHookName> = {
   [NotificationEvent.TaskFinished]: 'Stop',
   [NotificationEvent.NeedsInput]: 'Notification',
   [NotificationEvent.UsageLimitReached]: 'StopFailure',
+  [NotificationEvent.SubagentFinished]: 'SubagentStop',
 };
 
 function buildDispatchCommand(dispatcherScriptPath: string, event: NotificationEvent): string {

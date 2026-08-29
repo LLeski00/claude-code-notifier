@@ -7,5 +7,6 @@ export function buildConfig(): NotifierConfig {
   return {
     notifyOnIdle: workspaceConfig.get<boolean>('notifyOnIdle', true),
     toastEnabled: workspaceConfig.get<boolean>('toastEnabled', true),
+    notifySubagentFinished: workspaceConfig.get<boolean>('notifySubagentFinished', true),
   };
 }

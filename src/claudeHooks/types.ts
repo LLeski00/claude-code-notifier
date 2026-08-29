@@ -13,6 +13,7 @@ export interface ClaudeSettings {
     Stop?: HookGroup[];
     Notification?: HookGroup[];
     StopFailure?: HookGroup[];
+    SubagentStop?: HookGroup[];
     [key: string]: HookGroup[] | undefined;
   };
   [key: string]: unknown;

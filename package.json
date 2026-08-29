@@ -56,6 +56,11 @@
           "type": "boolean",
           "default": true,
           "description": "Also show a notification when Claude has been idle ~60s waiting for your input (not just permission prompts)."
+        },
+        "claudeNotifier.notifySubagentFinished": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a notification when a subagent finishes, separately from the main task-finished notification."
         }
       }
     }

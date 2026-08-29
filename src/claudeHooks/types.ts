@@ -12,6 +12,7 @@ export interface ClaudeSettings {
   hooks?: {
     Stop?: HookGroup[];
     Notification?: HookGroup[];
+    StopFailure?: HookGroup[];
     [key: string]: HookGroup[] | undefined;
   };
   [key: string]: unknown;

@@ -1,6 +1,6 @@
 param(
   [Parameter(Mandatory = $true)]
-  [ValidateSet('stop', 'notification')]
+  [ValidateSet('stop', 'notification', 'usageLimit')]
   [string]$Event
 )
 
@@ -24,6 +24,7 @@ try {
   switch ($Event) {
     'stop' { $title = 'Claude Code'; $message = 'Task finished' }
     'notification' { $title = 'Claude Code'; $message = 'Needs your input' }
+    'usageLimit' { $title = 'Claude Code'; $message = 'Usage limit reached' }
     default { $title = 'Claude Code'; $message = 'Notification' }
   }
 

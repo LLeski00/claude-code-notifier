@@ -1,15 +1,27 @@
 import { NotificationEvent } from '../domain';
 import { ClaudeSettings, HookGroup } from './types';
 
-type ClaudeHookName = 'Stop' | 'Notification';
+type ClaudeHookName = 'Stop' | 'Notification' | 'StopFailure';
 
 const HOOK_NAME_BY_EVENT: Record<NotificationEvent, ClaudeHookName> = {
   [NotificationEvent.TaskFinished]: 'Stop',
   [NotificationEvent.NeedsInput]: 'Notification',
+  [NotificationEvent.UsageLimitReached]: 'StopFailure',
 };
 
 function buildDispatchCommand(dispatcherScriptPath: string, event: NotificationEvent): string {
   return `powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File "${dispatcherScriptPath}" -Event ${event}`;
+}
+
+function matcherForEvent(event: NotificationEvent, notifyOnIdle: boolean): string {
+  switch (event) {
+    case NotificationEvent.NeedsInput:
+      return notifyOnIdle ? '' : 'permission_prompt';
+    case NotificationEvent.UsageLimitReached:
+      return 'rate_limit';
+    default:
+      return '';
+  }
 }
 
 function withoutOurHooks(groups: HookGroup[] | undefined, dispatcherScriptPath: string): HookGroup[] {
@@ -36,7 +48,7 @@ export function withNotifierEnabled(
   for (const event of Object.values(NotificationEvent)) {
     const hookName = HOOK_NAME_BY_EVENT[event];
     const command = buildDispatchCommand(dispatcherScriptPath, event);
-    const matcher = event === NotificationEvent.NeedsInput && !notifyOnIdle ? 'permission_prompt' : '';
+    const matcher = matcherForEvent(event, notifyOnIdle);
 
     const groups = withoutOurHooks(hooks[hookName], dispatcherScriptPath);
     groups.push({ matcher, hooks: [{ type: 'command', command }] });

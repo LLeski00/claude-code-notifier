@@ -13,8 +13,9 @@ This extension shows the popup a different way, one that doesn't have that restr
 ## What it does
 
 Once enabled, you'll get a popup whenever:
-- Claude finishes responding to you, or
-- Claude needs something from you — like a permission prompt, or it's been waiting quietly for about a minute.
+- Claude finishes responding to you,
+- Claude needs something from you — like a permission prompt, or it's been waiting quietly for about a minute, or
+- Claude hits its usage limit and can't keep going.
 
 This works no matter how you use Claude Code — in this VS Code extension, in a terminal, anywhere.
 
@@ -62,7 +63,7 @@ Windows only.
 
 The popup is shown using `System.Windows.Forms.NotifyIcon` and its `ShowBalloonTip` method (in `resources/runNotify.ps1`) rather than the WinRT `Windows.UI.Notifications.ToastNotificationManager` API, because the latter requires the calling process to be registered under a real AUMID — normally granted via a Start Menu shortcut with notification support — and silently drops the toast otherwise.
 
-Two [Claude Code hooks](https://code.claude.com/docs/en/hooks) — **Stop** and **Notification** — are written to `~/.claude/settings.json`. Both call the same dispatcher script, which reads a small config file and shows the popup if it's enabled.
+Three [Claude Code hooks](https://code.claude.com/docs/en/hooks) — **Stop**, **Notification**, and **StopFailure** (matched to `rate_limit`) — are written to `~/.claude/settings.json`. All three call the same dispatcher script, which reads a small config file and shows the popup if it's enabled.
 
 ```
 resources/runNotify.ps1   dispatcher: reads config.json, shows the toast (System.Windows.Forms NotifyIcon balloon)

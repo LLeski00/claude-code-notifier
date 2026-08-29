@@ -4,7 +4,7 @@ import { getDispatcherScriptPath } from '../paths';
 import { NotificationEvent } from '../domain';
 import { syncConfig } from '../config';
 
-export function testSound(): void {
+export function testNotification(): void {
   syncConfig();
 
   const child = spawn(
@@ -24,5 +24,7 @@ export function testSound(): void {
     { windowsHide: true }
   );
 
-  child.on('error', (err) => vscode.window.showErrorMessage(`Claude Notifier: failed to play sound: ${err.message}`));
+  child.on('error', (err) =>
+    vscode.window.showErrorMessage(`Claude Notifier: failed to show notification: ${err.message}`)
+  );
 }

@@ -1,7 +1,7 @@
 {
-  "name": "sound-notifier-for-claude-code",
-  "displayName": "Sound Notifier for Claude Code",
-  "description": "A notification sound for Claude Code that actually plays, even on machines where Windows system sounds are silently broken. Unofficial, not affiliated with Anthropic.",
+  "name": "claude-code-toast-notifier",
+  "displayName": "Claude Code Toast Notifier",
+  "description": "A Windows popup (toast) notification for Claude Code that reliably appears, without needing the app registration Windows normally requires for toast notifications. Unofficial, not affiliated with Anthropic.",
   "version": "0.1.0",
   "publisher": "lukalesko",
   "license": "MIT",
@@ -16,7 +16,8 @@
     "claude",
     "claude code",
     "notification",
-    "sound",
+    "toast",
+    "popup",
     "alert",
     "hooks"
   ],
@@ -32,29 +33,29 @@
     "commands": [
       {
         "command": "claudeNotifier.setup",
-        "title": "Claude Notifier: Enable Sound Notifications"
+        "title": "Claude Notifier: Enable Notifications"
       },
       {
         "command": "claudeNotifier.disable",
-        "title": "Claude Notifier: Disable Sound Notifications"
+        "title": "Claude Notifier: Disable Notifications"
       },
       {
-        "command": "claudeNotifier.testSound",
-        "title": "Claude Notifier: Test Sound"
+        "command": "claudeNotifier.testNotification",
+        "title": "Claude Notifier: Test Notification"
       }
     ],
     "configuration": {
       "title": "Claude Code Notifier",
       "properties": {
-        "claudeNotifier.soundFile": {
-          "type": "string",
-          "default": "",
-          "description": "Absolute path to a custom .wav file to play. Leave empty to use the bundled sound."
+        "claudeNotifier.toastEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a Windows popup notification (toast, bottom-right of the screen) when Claude finishes or needs input."
         },
         "claudeNotifier.notifyOnIdle": {
           "type": "boolean",
           "default": true,
-          "description": "Also play a sound when Claude has been idle ~60s waiting for your input (not just permission prompts)."
+          "description": "Also show a notification when Claude has been idle ~60s waiting for your input (not just permission prompts)."
         }
       }
     }

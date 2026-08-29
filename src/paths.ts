@@ -16,7 +16,3 @@ export function getDispatcherScriptPath(): string {
 export function getConfigFilePath(): string {
   return path.join(getStableDir(), 'config.json');
 }
-
-export function getDefaultSoundPath(): string {
-  return path.join(getStableDir(), 'sounds', 'notify.wav');
-}

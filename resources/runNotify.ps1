@@ -5,8 +5,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$root = $PSScriptRoot
-$configPath = Join-Path $root 'config.json'
+$configPath = Join-Path $PSScriptRoot 'config.json'
 
 try {
   $config = Get-Content $configPath -Raw | ConvertFrom-Json
@@ -14,21 +13,33 @@ try {
   exit 0
 }
 
-foreach ($channelId in $config.channels.PSObject.Properties.Name) {
-  $channelSettings = $config.channels.$channelId
-  if (-not $channelSettings.enabled) {
-    continue
+if (-not $config.toastEnabled) {
+  exit 0
+}
+
+try {
+  Add-Type -AssemblyName System.Windows.Forms
+  Add-Type -AssemblyName System.Drawing
+
+  switch ($Event) {
+    'stop' { $title = 'Claude Code'; $message = 'Task finished' }
+    'notification' { $title = 'Claude Code'; $message = 'Needs your input' }
+    default { $title = 'Claude Code'; $message = 'Notification' }
   }
 
-  $channelScript = Join-Path $root "channels\$channelId.ps1"
-  if (-not (Test-Path $channelScript)) {
-    continue
+  $notifyIcon = New-Object System.Windows.Forms.NotifyIcon
+  $notifyIcon.Icon = [System.Drawing.SystemIcons]::Information
+  $notifyIcon.Visible = $true
+  Start-Sleep -Milliseconds 300
+  $notifyIcon.ShowBalloonTip(5000, $title, $message, [System.Windows.Forms.ToolTipIcon]::Info)
+
+  $deadline = (Get-Date).AddSeconds(5)
+  while ((Get-Date) -lt $deadline) {
+    [System.Windows.Forms.Application]::DoEvents()
+    Start-Sleep -Milliseconds 100
   }
 
-  try {
-    . $channelScript
-    Invoke-Notify -Event $Event -Settings $channelSettings
-  } catch {
-    continue
-  }
+  $notifyIcon.Dispose()
+} catch {
+  exit 0
 }

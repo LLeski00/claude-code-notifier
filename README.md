@@ -1,56 +1,81 @@
-# Sound Notifier for Claude Code
+# Claude Code Toast Notifier
 
-A sound alert for [Claude Code](https://claude.com/claude-code) that actually plays — even on Windows machines where system sounds are silently broken.
+Shows a little Windows popup in the bottom-right of your screen whenever [Claude Code](https://claude.com/claude-code) finishes a task or needs your input — the same kind of popup you get from Windows Update.
 
 *Unofficial community extension. Not affiliated with or endorsed by Anthropic.*
 
 ## Why this exists
 
-Several "Claude Code notifier" extensions already exist, but on some Windows machines they simply produce no sound: no error, no popup, nothing. On those machines, `Settings → Sound → Sounds` also fails — clicking **Test** on any system sound plays nothing, even though every other app (browser, Spotify, games, VLC) has audio working perfectly.
+Windows has a "proper" way for apps to show these popups, but it only works for apps that were installed the normal way (with a Start Menu shortcut). Claude Code runs as a background script, so it doesn't qualify — and when that happens, Windows just quietly refuses to show the popup, without any error message.
 
-The cause is that most notifier tools (and Windows' own sound-scheme "Test" button) go through the legacy `winmm` / `PlaySound` / `System.Media.SoundPlayer` audio path. On some setups that path is broken — no audio session is even created — while the modern WASAPI-based path used by browsers and media apps works fine.
-
-This extension sidesteps the broken path entirely: it plays sound through the same **`Windows.Media.Playback`** (WinRT) engine that Movies & TV and other modern apps use. If your browser and media apps have sound, this will too.
+This extension shows the popup a different way, one that doesn't have that restriction, so the notification actually shows up every time.
 
 ## What it does
 
-Adds two [Claude Code hooks](https://code.claude.com/docs/en/hooks) — **Stop** (Claude finishes responding) and **Notification** (Claude needs your input: a permission prompt, or idle ~60s waiting for you) — written to `~/.claude/settings.json`, so they apply everywhere Claude Code runs: this VS Code extension's chat panel, the CLI, anywhere.
+Once enabled, you'll get a popup whenever:
+- Claude finishes responding to you, or
+- Claude needs something from you — like a permission prompt, or it's been waiting quietly for about a minute.
 
-Both hooks call a single dispatcher script that reads a small config file and runs whichever notification **channels** are enabled. Sound is the only channel today; a Windows toast-style popup (bottom-right of the screen, like a Windows Update notification) is planned as a second channel — the dispatcher already loops over however many channels are configured, so adding one is a matter of dropping in a new channel implementation rather than changing how hooks are wired up.
+This works no matter how you use Claude Code — in this VS Code extension, in a terminal, anywhere.
 
-## Architecture
+## How to use it
 
-```
-resources/runNotify.ps1        dispatcher: reads config.json, runs each enabled channel
-resources/channels/sound.ps1   the sound channel (WinRT Windows.Media.Playback)
+1. Make sure Windows notifications are turned on (see [Requirements](#requirements) below).
+2. Open the Command Palette (`Ctrl+Shift+P`) and run **`Claude Notifier: Enable Notifications`**.
+3. That's it — you'll now see a popup whenever Claude finishes or needs you.
 
-src/domain/                    NotificationEvent, the NotificationChannel contract
-src/channels/                  one file per channel, registered in an array (Strategy pattern)
-src/config/                    builds & persists the dispatcher's config.json from VS Code settings
-src/claudeHooks/                reads/writes ~/.claude/settings.json, registers the dispatcher hook
-src/commands/                    enable / disable / test-sound command handlers
-```
-
-## Usage
-
-1. Run **`Claude Notifier: Enable Sound Notifications`** from the Command Palette.
-2. That's it. You'll hear a sound whenever Claude finishes or needs you.
-
-Other commands:
-- **`Claude Notifier: Test Sound`** — plays the sound immediately, to check it works.
-- **`Claude Notifier: Disable Sound Notifications`** — removes the hooks again.
+Other commands, also run from the Command Palette:
+- **`Claude Notifier: Test Notification`** — shows a popup right away, so you can check it works.
+- **`Claude Notifier: Disable Notifications`** — turns the popups back off.
 
 ## Settings
 
-| Setting | Default | Description |
+You can adjust these in VS Code's Settings (search for "Claude Notifier"):
+
+| Setting | Default | What it does |
 |---|---|---|
-| `claudeNotifier.soundFile` | *(bundled sound)* | Absolute path to a custom `.wav` file to play instead. |
-| `claudeNotifier.notifyOnIdle` | `true` | Also play a sound when Claude has been idle ~60s waiting for input, not just on permission prompts. |
+| `claudeNotifier.toastEnabled` | On | Turns the popup notification on or off. |
+| `claudeNotifier.notifyOnIdle` | On | Also shows a popup if Claude has been sitting idle for about a minute waiting for you, not just for permission prompts. |
+
+## Requirements
+
+Windows notifications need to be switched on for this to work:
+- the main switch: **Settings → System → Notifications**, and
+- the switch for **Windows PowerShell** specifically, a bit further down that same page.
+
+If either of these is off, the popup won't appear and there's no error message to tell you why — this is a Windows setting, not something this extension controls.
+
+## Troubleshooting
+
+**Popups not showing up?** Check the [Requirements](#requirements) above first — this is by far the most common cause.
+
+**Want to turn off the notification sound?** Windows automatically plays its default chime whenever this popup appears. To mute just this extension's sound: go to **Settings → System → Notifications**, click into the **Windows PowerShell** entry, and turn off "Play a sound when a notification arrives." This won't affect notification sounds from any other app.
 
 ## Platform
 
-Windows only — the sound channel (`resources/channels/sound.ps1`) uses PowerShell and the WinRT `Windows.Media.Playback` API.
+Windows only.
+
+## For contributors
+
+<details>
+<summary>Technical details</summary>
+
+The popup is shown using `System.Windows.Forms.NotifyIcon` and its `ShowBalloonTip` method (in `resources/runNotify.ps1`) rather than the WinRT `Windows.UI.Notifications.ToastNotificationManager` API, because the latter requires the calling process to be registered under a real AUMID — normally granted via a Start Menu shortcut with notification support — and silently drops the toast otherwise.
+
+Two [Claude Code hooks](https://code.claude.com/docs/en/hooks) — **Stop** and **Notification** — are written to `~/.claude/settings.json`. Both call the same dispatcher script, which reads a small config file and shows the popup if it's enabled.
+
+```
+resources/runNotify.ps1   dispatcher: reads config.json, shows the toast (System.Windows.Forms NotifyIcon balloon)
+
+src/domain/               NotificationEvent vocabulary shared by the extension and the hook registration
+src/config/                builds & persists the dispatcher's config.json from VS Code settings
+src/claudeHooks/            reads/writes ~/.claude/settings.json, registers the dispatcher hook
+src/commands/                 enable / disable / test-notification command handlers
+```
+
+</details>
 
 ## License
 
 MIT © Luka Leskovec
+</content>

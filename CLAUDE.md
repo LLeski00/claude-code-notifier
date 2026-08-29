@@ -1,4 +1,4 @@
-# Claude Code Toast Notifier
+# Claude Windows Notifier
 
 A VS Code extension that shows a Windows popup notification when Claude Code finishes responding or needs input. Built because the "proper" WinRT toast API silently drops notifications unless the calling process is registered under a real AUMID — see README.md "Why this exists" for the full story.
 

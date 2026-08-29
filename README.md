@@ -1,4 +1,4 @@
-# Claude Code Toast Notifier
+# Claude Windows Notifier
 
 A VS Code extension that pops up a Windows notification whenever [Claude Code](https://claude.com/claude-code) finishes a task or needs your input — like the ones Windows Update shows, in the bottom-right of your screen, branded as Visual Studio Code. Works no matter how you run Claude Code (this extension, a terminal, anywhere), since it hooks into Claude Code itself, not VS Code.
 

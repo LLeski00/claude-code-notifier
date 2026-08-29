@@ -1,6 +1,6 @@
 {
   "name": "claude-code-toast-notifier",
-  "displayName": "Claude Code Toast Notifier",
+  "displayName": "Claude Windows Notifier",
   "description": "A Windows popup (toast) notification for Claude Code, shown under VS Code's own trusted app identity so it actually appears. Unofficial, not affiliated with Anthropic.",
   "version": "0.1.0",
   "publisher": "lukalesko",
